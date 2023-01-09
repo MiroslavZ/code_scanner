@@ -1,12 +1,15 @@
 import re
+import sys
 from os import walk
 from pathlib import Path
+from typing import Optional
 
 import joblib
 from logging import basicConfig, getLogger
 
+import numpy
 from numpy import ndarray
-from pandas import read_fwf, DataFrame
+from pandas import DataFrame
 from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -38,7 +41,7 @@ class Scanner:
 
     def find_files_to_scan(self, scanned_project_path: Path) -> list[Path]:
         if not scanned_project_path.exists():
-            raise
+            raise FileNotFoundError
         logger.info(scanned_project_path.resolve())
         logger.info(Path.cwd())
         files_to_scan = []
@@ -66,15 +69,18 @@ class Scanner:
                 continue
         return files_to_scan
 
-    def transform_file_to_df(self, path: Path) -> DataFrame:
+    def transform_file_to_df(self, path: Path) -> Optional[DataFrame]:
         logger.debug(f'transforming file {path}')
         if path.exists() and path.is_file():
-            # нужен более правильный способ читать файлы
-            df = read_fwf(path, names=[])
-            df.rename(columns={0: 'code'}, inplace=True)
-            if df.shape[1] > 1:
-                df.drop(df.columns[[1]], axis=1, inplace=True)
-            return df
+            with path.open() as f:
+                try:
+                    lines = f.readlines()
+                    array = numpy.array(lines)
+                    df = DataFrame(array, columns=['code'])
+                    return df
+                except Exception as err:
+                    logger.error(err)
+                    return None
         else:
             logger.error(f'{path} not exists or is not a file')
             raise FileNotFoundError
@@ -120,29 +126,30 @@ class Scanner:
             c.export_df(prefix)
 
     def log_report(self, code_infos: list[CodeFileInfo]) -> None:
-        logger.info('Found secrets:')
+        secret_founded = False
+        print('Found secrets:')
         for code_info in code_infos:
             if code_info.df['is_secret'][code_info.df['is_secret'].isin([1])].empty:
                 continue
-            logger.info(f'file: {code_info.path.absolute()}')
+            print(f'file: {code_info.path.absolute()}')
             for i in range(code_info.df.shape[0]):
                 series = code_info.df.iloc[i]
                 if series['is_secret'] == 1:
-                    logger.info(f'\t{series["code"]}\t({series["is_secret"]})')
+                    print(f'\t{series["code"]} ({series["is_secret"]})')
+                    secret_founded = True
+        if secret_founded:
+            sys.exit(1)
 
     def scan(self, directory: Path):
         files_to_scan = self.find_files_to_scan(directory)
         logger.debug(files_to_scan)
         code_infos = self.get_code_dfs(files_to_scan)
         code_infos_simple = self.get_simple_preprocessed_dfs(code_infos)
-        # export_df_collections(code_infos_simple, 'simple_prep')
+        # self.export_df_collections(code_infos_simple, 'simple_prep')
         code_infos_complex = self.get_complex_preprocessed_dfs(code_infos_simple)
-        # export_df_collections(code_infos_complex, 'complex_prep')
+        # self.export_df_collections(code_infos_complex, 'complex_prep')
         matrices = self.get_sparse_matrices(code_infos_complex)
         predictions = self.get_predictions(matrices)
         self.combine_results(code_infos_simple, predictions)
-        # export_df_collections(code_infos_simple, 'predicted')
+        # self.export_df_collections(code_infos_simple, 'predicted')
         self.log_report(code_infos_simple)
-
-if __name__ == '__main__':
-    Scanner()._load_models()
