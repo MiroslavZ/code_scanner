@@ -1,11 +1,10 @@
-from enum import Enum, unique
 from os import getenv
 from json import loads
 from pathlib import Path
 from dotenv import load_dotenv
 from logging import getLogger, basicConfig
 from argparse import ArgumentParser, Namespace
-from scanner.Scanner import Scanner
+from code_scanner.scanner.scanner import Scanner
 
 logger = getLogger(__name__)
 
@@ -45,9 +44,8 @@ def _arg_parse() -> Namespace:
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     load_envs()
-
     args = _arg_parse()
     logger.debug(args)
     if args.scan_dir:
@@ -55,3 +53,7 @@ if __name__ == '__main__':
         scanner.scan(args.scan_dir)
     else:
         logger.info('Не указана директория для сканирования')
+
+
+if __name__ == '__main__':
+    main()

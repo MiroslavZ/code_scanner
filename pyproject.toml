@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "code-scanner"
+version = "0.1.0"
+description = "Scanner for searching secrets in source code"
+authors = ["MiroslavZ"]
+readme = "README.md"
+packages = [{include = "code_scanner"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+click = "8.1.3"
+colorama = "0.4.6"
+et-xmlfile = "1.1.0"
+joblib = "1.2.0"
+nltk = "3.8"
+numpy = "1.23.5"
+openpyxl = "3.0.10"
+pandas = "1.5.2"
+python-dateutil = "2.8.2"
+python-dotenv = "0.21.0"
+pytz = "2022.6"
+regex = "2022.10.31"
+scikit-learn = "1.2.0"
+scipy = "1.9.3"
+six = "1.16.0"
+threadpoolctl = "3.1.0"
+tqdm = "4.64.1"
+
+
+[tool.poetry.scripts]
+code-scanner = 'code_scanner.main:main'
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

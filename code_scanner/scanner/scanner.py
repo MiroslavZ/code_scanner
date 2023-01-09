@@ -1,12 +1,8 @@
-import os
 import re
-from enum import Enum, unique
-from os import walk, getenv
-from json import loads
+from os import walk
 from pathlib import Path
 
 import joblib
-from dotenv import load_dotenv
 from logging import basicConfig, getLogger
 
 from numpy import ndarray
@@ -15,7 +11,7 @@ from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
-from code_file import CodeFileInfo
+from code_scanner.code_file import CodeFileInfo
 
 logger = getLogger(__name__)
 
@@ -37,8 +33,8 @@ class Scanner:
         basicConfig(level=log_level)
 
     def _load_models(self):
-        self._classifier: LogisticRegression = joblib.load('pretrained/model_clf.pkl')
-        self._vectorizer: TfidfVectorizer = joblib.load('pretrained/model_tfidf.pkl')
+        self._classifier: LogisticRegression = joblib.load('code_scanner/pretrained/model_clf.pkl')
+        self._vectorizer: TfidfVectorizer = joblib.load('code_scanner/pretrained/model_tfidf.pkl')
 
     def find_files_to_scan(self, scanned_project_path: Path) -> list[Path]:
         if not scanned_project_path.exists():
@@ -147,3 +143,6 @@ class Scanner:
         self.combine_results(code_infos_simple, predictions)
         # export_df_collections(code_infos_simple, 'predicted')
         self.log_report(code_infos_simple)
+
+if __name__ == '__main__':
+    Scanner()._load_models()
