@@ -33,9 +33,9 @@ class Scanner:
         self._load_models()
 
     def _load_models(self):
-        clf_path = Path(Path(__file__).parent.parent, 'code_scanner', 'pretrained', 'model_clf.pkl')
+        clf_path = Path(Path(__file__).parent.parent, 'pretrained', 'model_clf.pkl')
         self._classifier: LogisticRegression = joblib.load(clf_path)
-        tfidf_path = Path(Path(__file__).parent.parent, 'code_scanner', 'pretrained', 'model_tfidf.pkl')
+        tfidf_path = Path(Path(__file__).parent.parent, 'pretrained', 'model_tfidf.pkl')
         self._vectorizer: TfidfVectorizer = joblib.load(tfidf_path)
 
     def find_files_to_scan(self, scanned_project_path: Path) -> list[Path]:
