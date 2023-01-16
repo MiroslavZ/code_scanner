@@ -33,8 +33,10 @@ class Scanner:
         self._load_models()
 
     def _load_models(self):
-        self._classifier: LogisticRegression = joblib.load('code_scanner/pretrained/model_clf.pkl')
-        self._vectorizer: TfidfVectorizer = joblib.load('code_scanner/pretrained/model_tfidf.pkl')
+        clf_path = Path(Path().parent, 'code_scanner', 'pretrained', 'model_clf.pkl')
+        self._classifier: LogisticRegression = joblib.load(clf_path)
+        tfidf_path = Path(Path().parent, 'code_scanner', 'pretrained', 'model_tfidf.pkl')
+        self._vectorizer: TfidfVectorizer = joblib.load(tfidf_path)
 
     def find_files_to_scan(self, scanned_project_path: Path) -> list[Path]:
         if not scanned_project_path.exists():
@@ -144,7 +146,7 @@ class Scanner:
                     report.append(f'{series["code"]} ({series["is_secret"]})')
                     secret_founded = True
         for record in report:
-            print(record)
+            logger.info(record)
         #self.write_logs_in_repo(report)
         if secret_founded:
             sys.exit(1)
