@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 import sys
 from os import walk
@@ -5,9 +6,10 @@ from pathlib import Path
 from typing import Optional
 
 import joblib
-from logging import basicConfig, getLogger
+from logging import getLogger
 
 import numpy
+from github import Github
 from numpy import ndarray
 from pandas import DataFrame
 from scipy.sparse import csr_matrix
@@ -20,20 +22,15 @@ logger = getLogger(__name__)
 
 
 class Scanner:
-    def __init__(self, ignored_dirs=None, ignored_extensions=None, log_level='INFO'):
+    def __init__(self, ignored_dirs=None, ignored_extensions=None, token=None):
         if ignored_extensions is None:
             ignored_extensions = []
         if ignored_dirs is None:
             ignored_dirs = []
         self.ignored_dirs = ignored_dirs
         self.ignored_extensions = ignored_extensions
-        self.log_level = log_level
-
-        self._configure_logger(self.log_level)
+        self.github = Github(token)
         self._load_models()
-
-    def _configure_logger(self, log_level='INFO'):
-        basicConfig(level=log_level)
 
     def _load_models(self):
         self._classifier: LogisticRegression = joblib.load('code_scanner/pretrained/model_clf.pkl')
@@ -125,18 +122,30 @@ class Scanner:
         for c in collection:
             c.export_df(prefix)
 
+    def write_logs_in_repo(self, records: list[str]):
+        if self.github:
+            try:
+                repo = self.github.get_user().get_repo("actionsTest")
+                sha = repo.get_contents('.env').sha
+                repo.update_file('.env', 'Updated log file', '\n'.join(records), sha)
+            except Exception as err:
+                logger.error(err)
+
     def log_report(self, code_infos: list[CodeFileInfo]) -> None:
         secret_founded = False
-        print('Found secrets:')
+        report = [f'{datetime.now()}', 'Found secrets:']
         for code_info in code_infos:
             if code_info.df['is_secret'][code_info.df['is_secret'].isin([1])].empty:
                 continue
-            print(f'file: {code_info.path.absolute()}')
+            report.append(f'file: {code_info.path.absolute()}')
             for i in range(code_info.df.shape[0]):
                 series = code_info.df.iloc[i]
                 if series['is_secret'] == 1:
-                    print(f'\t{series["code"]} ({series["is_secret"]})')
+                    report.append(f'{series["code"]} ({series["is_secret"]})')
                     secret_founded = True
+        for record in report:
+            print(record)
+        #self.write_logs_in_repo(report)
         if secret_founded:
             sys.exit(1)
 

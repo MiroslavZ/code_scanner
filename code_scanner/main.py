@@ -8,26 +8,10 @@ from code_scanner.scanner.scanner import Scanner
 
 logger = getLogger(__name__)
 
-DIRS_TO_IGNORE = []
-EXTENSIONS_TO_IGNORE = []
-LOG_LEVEL = 'INFO'
 
-
-def load_envs():
-    load_dotenv()
-    global LOG_LEVEL
+def configure_logging():
     if getenv('LOG_LEVEL'):
         basicConfig(level=getenv('LOG_LEVEL'))
-    global DIRS_TO_IGNORE
-    if getenv('IGNORED_DIRS'):
-        DIRS_TO_IGNORE = loads(getenv('IGNORED_DIRS'))
-    else:
-        logger.warning('Unable to load list of ignored dirs')
-    global EXTENSIONS_TO_IGNORE
-    if getenv('IGNORED_DIRS'):
-        EXTENSIONS_TO_IGNORE = loads(getenv('IGNORED_EXTENSIONS'))
-    else:
-        logger.warning('Unable to load list of ignored extensions')
 
 
 def _arg_parse() -> Namespace:
@@ -45,11 +29,14 @@ def _arg_parse() -> Namespace:
 
 
 def main():
-    load_envs()
+    load_dotenv()
+    configure_logging()
     args = _arg_parse()
     logger.debug(args)
     if args.scan_dir:
-        scanner = Scanner(DIRS_TO_IGNORE, EXTENSIONS_TO_IGNORE, LOG_LEVEL)
+        ignored_dirs = loads(getenv('IGNORED_DIRS'))
+        ignored_extensions = loads(getenv('IGNORED_EXTENSIONS'))
+        scanner = Scanner(ignored_dirs, ignored_extensions, getenv('GITHUB_TOKEN'))
         scanner.scan(args.scan_dir)
     else:
         logger.info('Не указана директория для сканирования')
