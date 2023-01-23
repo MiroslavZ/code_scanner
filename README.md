@@ -6,13 +6,16 @@
 - Локальный запуск сканера;
 - Интеграция сканера в собственный репозиторий через github actions;
 
-##Локальный запуск сканера
+## Локальный запуск сканера
+
 1. Загрузка сканера с github `git clone https://github.com/MiroslavZ/code_scanner.git`
 2. Установка в качестве пакета `pip install -e PATH/TO/SCANNER/DIR`
 3. Запуск сканера с указанием директории для сканирования `code_scanner --scan-dir PATH/TO/SCANNED/PROJECT`
 
-##Интеграция через github action
+## Интеграция через github action
+
 Скопируйте код данного action в свой репозиторий:
+
 ```buildoutcfg
 name: Code checks
 
